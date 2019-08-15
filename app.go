@@ -66,8 +66,10 @@ func (a *App) Command(name string, handler CommandHandler) *Command {
 }
 
 // Before adds a function handler
+//
+// This auto-excludes the help & version commands
 func (a *App) Before(fn CallbackHandler) {
-	a.BeforeExcluding(fn)
+	a.BeforeExcluding(fn, "help", "version")
 }
 
 // BeforeExcluding adds a function handler but doesn't run it for the passed command names
