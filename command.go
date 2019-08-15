@@ -76,6 +76,8 @@ func (c *Command) flagSet(ctx *Context, name string) (*flag.FlagSet, error) {
 			collection := &FlagCollection{Values: make([]string, 0)}
 			set.Var(collection, name, desc.usage)
 			ctx.flags[name] = collection
+		case "bool":
+			ctx.flags[name] = set.Bool(name, desc.value.(bool), desc.usage)
 		default:
 			return nil, fmt.Errorf("unknown flag type: %s", desc.kind)
 		}
