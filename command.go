@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"sort"
+	"strings"
 )
 
 // CommandHandler is the function that will be called when a user performs a sub-command
@@ -71,6 +72,10 @@ func (c *Command) flagSet(ctx *Context, name string) (*flag.FlagSet, error) {
 			ctx.flags[name] = set.String(name, desc.value.(string), desc.usage)
 		case "integer":
 			ctx.flags[name] = set.Int64(name, desc.value.(int64), desc.usage)
+		case "collection":
+			collection := &FlagCollection{Values: make([]string, 0)}
+			set.Var(collection, name, desc.usage)
+			ctx.flags[name] = collection
 		default:
 			return nil, fmt.Errorf("unknown flag type: %s", desc.kind)
 		}
@@ -106,4 +111,20 @@ func (c *Command) flagNames() []string {
 	sort.Strings(names)
 
 	return names
+}
+
+// FlagCollection contains a list of flags
+type FlagCollection struct {
+	Values []string
+}
+
+func (f *FlagCollection) String() string {
+	return strings.Join(f.Values, ", ")
+}
+
+// Set adds a flag value
+func (f *FlagCollection) Set(value string) error {
+	f.Values = append(f.Values, value)
+
+	return nil
 }

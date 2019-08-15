@@ -54,6 +54,12 @@ func (c *Context) FlagString(name string) string {
 	return *(value.(*string))
 }
 
+func (c *Context) FlagCollection(name string) []string {
+	value, _ := c.Flag(name)
+	coll := value.(*FlagCollection)
+	return coll.Values
+}
+
 // Argument returns a named argument
 func (c *Context) Argument(name string) string {
 	return c.namedArgs[name]

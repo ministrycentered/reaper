@@ -66,4 +66,26 @@ func TestApp(t *testing.T) {
 
 		assert.Error(t, err)
 	})
+
+	t.Run("given a valid app with multiple inputs", func(t *testing.T) {
+		app := NewApp("testing")
+
+		var first string
+		var second string
+
+		app.Command("test", func(c *Context) error {
+			set := c.FlagCollection("option")
+			first = set[0]
+			second = set[1]
+			return nil
+		}).Configure(func(c *Command) {
+			c.Flag("option", "collection", nil, "a list of options")
+		})
+
+		err := app.Execute([]string{"test", "-option", "Flag One", "-option", "Flag Two"})
+
+		assert.NoError(t, err)
+		assert.Equal(t, "Flag One", first)
+		assert.Equal(t, "Flag Two", second)
+	})
 }
