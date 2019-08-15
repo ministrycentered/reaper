@@ -8,12 +8,16 @@ import (
 	"sort"
 )
 
+// CallbackHandler is the function signature for app callbacks
+type CallbackHandler func(*Context) error
+
 // App contains the configuration for a command line application
 type App struct {
 	name        string
 	output      *log.Logger
 	errLogger   *log.Logger
 	commands    map[string]*Command
+	before      []CallbackHandler
 	Description string
 	Version     string
 }
@@ -25,6 +29,7 @@ func NewApp(name string) *App {
 		output:    log.New(os.Stdout, "", 0),
 		errLogger: log.New(os.Stderr, "❗️ ", 0),
 		commands:  make(map[string]*Command, 0),
+		before:    make([]CallbackHandler, 0),
 		Version:   "1.0.0",
 	}
 
@@ -44,6 +49,11 @@ func (a *App) Command(name string, handler CommandHandler) *Command {
 	cmd := newCommand(name, handler)
 	a.commands[name] = cmd
 	return cmd
+}
+
+// Before adds a function handler
+func (a *App) Before(fn CallbackHandler) {
+	a.before = append(a.before, fn)
 }
 
 // Execute takes a list of arguments and runs the command that matches.
@@ -71,6 +81,13 @@ func (a *App) Execute(args []string) error {
 	}
 
 	cmd.handleArgs(ctx, flags.Args())
+
+	for _, handler := range a.before {
+		err = handler(ctx)
+		if err != nil {
+			return err
+		}
+	}
 
 	return cmd.handler(ctx)
 }

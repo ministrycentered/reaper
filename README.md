@@ -9,7 +9,7 @@ func main() {
   app.Description = "This is an example app for the Reaper CLI library"
 
   app.Command("greet", func(c *reaper.Context) error {
-    name, err := c.Get("What's your name?")
+    name, err := c.Input("What's your name?")
     if err != nil {
       return err
     }

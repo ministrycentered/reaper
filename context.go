@@ -13,6 +13,7 @@ type Context struct {
 	args      []string
 	flags     map[string]interface{}
 	namedArgs map[string]string
+	storage   map[string]interface{}
 }
 
 func newContext(app *App, args []string) *Context {
@@ -21,6 +22,7 @@ func newContext(app *App, args []string) *Context {
 		args:      args,
 		flags:     make(map[string]interface{}, 0),
 		namedArgs: make(map[string]string, 0),
+		storage:   make(map[string]interface{}, 0),
 	}
 }
 
@@ -30,6 +32,16 @@ func (c *Context) Flag(name string) (interface{}, error) {
 		return val, nil
 	}
 	return nil, fmt.Errorf("missing required flag %s", name)
+}
+
+// Set stores a value in the context for the key
+func (c *Context) Set(key string, value interface{}) {
+	c.storage[key] = value
+}
+
+// Get returns a stored value from the context
+func (c *Context) Get(key string) interface{} {
+	return c.storage[key]
 }
 
 // FlagString returns a flag string value.
@@ -50,8 +62,8 @@ func (c *Context) Output(value string) {
 	c.app.output.Print(value)
 }
 
-// Get asks for user input
-func (c *Context) Get(msg string) (string, error) {
+// Input asks for user input
+func (c *Context) Input(msg string) (string, error) {
 	reader := bufio.NewReader(os.Stdin)
 	fmt.Fprintf(os.Stderr, "%s ", msg)
 	text, err := reader.ReadString('\n')
@@ -63,7 +75,7 @@ func (c *Context) Get(msg string) (string, error) {
 
 // Confirm asks for conformation before continuing
 func (c *Context) Confirm(msg string) bool {
-	response, _ := c.Get(fmt.Sprintf("%s [Yn]", msg))
+	response, _ := c.Input(fmt.Sprintf("%s [Yn]", msg))
 
 	return response == "Y" || response == "y"
 }

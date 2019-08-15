@@ -26,10 +26,37 @@ func TestApp(t *testing.T) {
 		assert.Equal(t, "Maddie", name)
 	})
 
+	t.Run("given a valid app with a before action", func(t *testing.T) {
+		app := NewApp("testing")
+
+		var value string
+
+		app.Before(func(c *Context) error {
+			c.Set("value", "Super Cool")
+			return nil
+		})
+
+		app.Command("greet", func(c *Context) error {
+			value = c.Get("value").(string)
+			return nil
+		})
+
+		err := app.Execute([]string{"greet"})
+
+		assert.NoError(t, err)
+		assert.Equal(t, "Super Cool", value)
+	})
+
 	t.Run("given a valid app with an unknown command", func(t *testing.T) {
 		app := NewApp("testing")
 
+		app.Before(func(c *Context) error {
+			c.Set("foo", "bar")
+			return nil
+		})
+
 		app.Command("greet", func(c *Context) error {
+			assert.Equal(t, "bar", c.Get("foo"))
 			return nil
 		})
 
