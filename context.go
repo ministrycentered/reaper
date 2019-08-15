@@ -9,20 +9,22 @@ import (
 
 // Context is used to hold the state of the application
 type Context struct {
-	app       *App
-	args      []string
-	flags     map[string]interface{}
-	namedArgs map[string]string
-	storage   map[string]interface{}
+	CommandName string
+	app         *App
+	args        []string
+	flags       map[string]interface{}
+	namedArgs   map[string]string
+	storage     map[string]interface{}
 }
 
-func newContext(app *App, args []string) *Context {
+func newContext(app *App, name string, args []string) *Context {
 	return &Context{
-		app:       app,
-		args:      args,
-		flags:     make(map[string]interface{}, 0),
-		namedArgs: make(map[string]string, 0),
-		storage:   make(map[string]interface{}, 0),
+		CommandName: name,
+		app:         app,
+		args:        args,
+		flags:       make(map[string]interface{}, 0),
+		namedArgs:   make(map[string]string, 0),
+		storage:     make(map[string]interface{}, 0),
 	}
 }
 

@@ -17,9 +17,23 @@ type App struct {
 	output      *log.Logger
 	errLogger   *log.Logger
 	commands    map[string]*Command
-	before      []CallbackHandler
+	before      []callback
 	Description string
 	Version     string
+}
+
+type callback struct {
+	handler  CallbackHandler
+	excluded []string
+}
+
+func (c callback) isExcluded(name string) bool {
+	for _, key := range c.excluded {
+		if key == name {
+			return true
+		}
+	}
+	return false
 }
 
 // NewApp returns a new app ready to be configured
@@ -29,7 +43,7 @@ func NewApp(name string) *App {
 		output:    log.New(os.Stdout, "", 0),
 		errLogger: log.New(os.Stderr, "❗️ ", 0),
 		commands:  make(map[string]*Command, 0),
-		before:    make([]CallbackHandler, 0),
+		before:    make([]callback, 0),
 		Version:   "1.0.0",
 	}
 
@@ -53,7 +67,12 @@ func (a *App) Command(name string, handler CommandHandler) *Command {
 
 // Before adds a function handler
 func (a *App) Before(fn CallbackHandler) {
-	a.before = append(a.before, fn)
+	a.BeforeExcluding(fn)
+}
+
+// BeforeExcluding adds a function handler but doesn't run it for the passed command names
+func (a *App) BeforeExcluding(fn CallbackHandler, exclude ...string) {
+	a.before = append(a.before, callback{handler: fn, excluded: exclude})
 }
 
 // Execute takes a list of arguments and runs the command that matches.
@@ -69,7 +88,7 @@ func (a *App) Execute(args []string) error {
 		return fmt.Errorf("no command with the name %s. Try `help`", name)
 	}
 
-	ctx := newContext(a, args)
+	ctx := newContext(a, name, args)
 	flags, err := cmd.flagSet(ctx, name)
 	if err != nil {
 		return err
@@ -82,8 +101,11 @@ func (a *App) Execute(args []string) error {
 
 	cmd.handleArgs(ctx, flags.Args())
 
-	for _, handler := range a.before {
-		err = handler(ctx)
+	for _, callback := range a.before {
+		if callback.isExcluded(name) {
+			continue
+		}
+		err = callback.handler(ctx)
 		if err != nil {
 			return err
 		}
