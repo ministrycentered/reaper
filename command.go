@@ -17,6 +17,8 @@ type Command struct {
 	flags       map[string]*flagDesc
 	args        []*argDesc
 	examples    []string
+	Private     bool
+	isInternal  bool
 }
 
 type flagDesc struct {
@@ -33,10 +35,12 @@ type argDesc struct {
 
 func newCommand(name string, handler CommandHandler) *Command {
 	return &Command{
-		handler:  handler,
-		flags:    make(map[string]*flagDesc, 0),
-		args:     make([]*argDesc, 0),
-		examples: make([]string, 0),
+		handler:    handler,
+		flags:      make(map[string]*flagDesc, 0),
+		args:       make([]*argDesc, 0),
+		examples:   make([]string, 0),
+		Private:    false,
+		isInternal: false,
 	}
 }
 
@@ -61,6 +65,11 @@ func (c *Command) Flag(name, kind string, value interface{}, usage string) {
 // Example adds and example to the output
 func (c *Command) Example(e string) {
 	c.examples = append(c.examples, e)
+}
+
+// IsInternal returns if the command is defined from reaper
+func (c *Command) IsInternal() bool {
+	return c.isInternal
 }
 
 func (c *Command) flagSet(ctx *Context, name string) (*flag.FlagSet, error) {

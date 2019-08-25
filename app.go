@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"sort"
+	"strings"
 )
 
 // CallbackHandler is the function signature for app callbacks
@@ -48,11 +49,18 @@ func NewApp(name string) *App {
 	}
 
 	app.Command("help", helpCommandHandler).Configure(func(c *Command) {
+		c.isInternal = true
 		c.Description = "prints this help dialogue"
 	})
 
 	app.Command("version", versionHandler).Configure(func(c *Command) {
+		c.isInternal = true
 		c.Description = "print the current version"
+	})
+
+	app.Command("_commands", outputCommandsHandler).Configure(func(c *Command) {
+		c.isInternal = true
+		c.Private = true
 	})
 
 	return app
@@ -118,7 +126,10 @@ func (a *App) Execute(args []string) error {
 
 func (a *App) commandNames() []string {
 	names := []string{}
-	for name := range a.commands {
+	for name, cmd := range a.commands {
+		if cmd.Private {
+			continue
+		}
 		names = append(names, name)
 	}
 
@@ -129,5 +140,11 @@ func (a *App) commandNames() []string {
 
 func versionHandler(c *Context) error {
 	c.Output(c.app.Version)
+	return nil
+}
+
+func outputCommandsHandler(c *Context) error {
+	c.Output(strings.Join(c.app.commandNames(), " "))
+
 	return nil
 }

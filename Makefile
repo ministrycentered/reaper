@@ -15,6 +15,7 @@ test:
 .PHONY: build
 build: clean
 	cd $(ROOT_DIR)/example && go build -o $(ROOT_DIR)/example/example .
+	cd $(ROOT_DIR)/cli && go build -o $(ROOT_DIR)/reaper .
 
 .PHONY: run
 run: build
