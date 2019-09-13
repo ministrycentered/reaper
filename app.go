@@ -14,13 +14,16 @@ type CallbackHandler func(*Context) error
 
 // App contains the configuration for a command line application
 type App struct {
-	name        string
-	output      *log.Logger
-	errLogger   *log.Logger
-	commands    map[string]*Command
-	before      []callback
-	Description string
-	Version     string
+	name             string
+	output           *log.Logger
+	errLogger        *log.Logger
+	commands         map[string]*Command
+	apps             map[string]*App
+	before           []callback
+	Description      string
+	Version          string
+	parents          []string
+	commandConfigure func(*Command)
 }
 
 type callback struct {
@@ -45,6 +48,8 @@ func NewApp(name string) *App {
 		errLogger: log.New(os.Stderr, "❗️ ", 0),
 		commands:  make(map[string]*Command, 0),
 		before:    make([]callback, 0),
+		apps:      make(map[string]*App, 0),
+		parents:   make([]string, 0),
 		Version:   "1.0.0",
 	}
 
@@ -66,9 +71,27 @@ func NewApp(name string) *App {
 	return app
 }
 
+// Configure takes a function to call that is passed whenever a command is called
+func (a *App) Configure(fn func(c *Command)) {
+	a.commandConfigure = fn
+}
+
+// AddApp adds an app as a sub-application
+func (a *App) AddApp(app *App) {
+	app.parents = append(a.parents, a.name)
+	a.apps[app.name] = app
+}
+
+func (a *App) fullName() string {
+	return strings.Join(append(a.parents, a.name), " ")
+}
+
 // Command creates a new command with the handler and adds it to the app.
 func (a *App) Command(name string, handler CommandHandler) *Command {
 	cmd := newCommand(name, handler)
+	if a.commandConfigure != nil {
+		a.commandConfigure(cmd)
+	}
 	a.commands[name] = cmd
 	return cmd
 }
@@ -92,6 +115,11 @@ func (a *App) Execute(args []string) error {
 	}
 	name := args[0]
 	args = args[1:]
+
+	app, ok := a.apps[name]
+	if ok {
+		return app.Execute(args)
+	}
 
 	cmd, ok := a.commands[name]
 	if !ok {
@@ -130,6 +158,17 @@ func (a *App) commandNames() []string {
 		if cmd.Private {
 			continue
 		}
+		names = append(names, name)
+	}
+
+	sort.Strings(names)
+
+	return names
+}
+
+func (a *App) appNames() []string {
+	names := []string{}
+	for name := range a.apps {
 		names = append(names, name)
 	}
 

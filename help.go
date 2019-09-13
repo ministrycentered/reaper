@@ -17,7 +17,7 @@ func helpCommandHandler(c *Context) error {
 
 	output := log.New(writer, "", 0)
 
-	output.Print(aurora.Bold(fmt.Sprintf("%s help", c.app.name)))
+	output.Print(aurora.Bold(fmt.Sprintf("%s", c.app.fullName())))
 	output.Print(aurora.Faint(fmt.Sprintf("Version: %s", c.app.Version)))
 	output.Print("")
 
@@ -59,7 +59,7 @@ func helpCommandHandler(c *Context) error {
 				info := cmd.flags[name]
 				fName := aurora.Cyan(fmt.Sprintf("-%s", name))
 				fType := aurora.Faint(fmt.Sprintf("[%s]", info.kind))
-				output.Printf("    %s %s -- %s (default %v)", fName, fType, info.usage, info.value)
+				output.Printf("    %s %s -- %s (default `%v`)", fName, fType, info.usage, info.value)
 			}
 		}
 
@@ -68,6 +68,17 @@ func helpCommandHandler(c *Context) error {
 			for _, example := range cmd.examples {
 				output.Printf("      $ %s %s %s", c.app.name, name, example)
 			}
+		}
+
+		output.Print("")
+	}
+
+	appNames := c.app.appNames()
+	if len(appNames) > 0 {
+		output.Print(aurora.Yellow("Apps:"), aurora.Faint("Sub applications for"), aurora.Faint(c.app.name))
+
+		for _, name := range appNames {
+			output.Print(" - ", aurora.Cyan(name))
 		}
 
 		output.Print("")

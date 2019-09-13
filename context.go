@@ -2,6 +2,7 @@ package reaper
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
@@ -68,6 +69,16 @@ func (c *Context) Argument(name string) string {
 // Output writes the string to stdout
 func (c *Context) Output(value string) {
 	c.app.output.Print(value)
+}
+
+// OutputJSON dumps the object into a pretty-printed JSON string.
+func (c *Context) OutputJSON(obj interface{}) error {
+	payload, err := json.MarshalIndent(obj, "", "  ")
+	if err != nil {
+		return nil
+	}
+	c.Output(string(payload))
+	return nil
 }
 
 // Input asks for user input
