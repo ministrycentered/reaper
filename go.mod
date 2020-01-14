@@ -1,4 +1,4 @@
-module github.com/maddiesch/reaper
+module github.com/ministrycentered/reaper
 
 go 1.12
 
